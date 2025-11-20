@@ -1,82 +1,134 @@
-✈️ AI 智慧旅遊規劃助手 - 系統架構與技術說明
-1. 系統架構概觀 (System Architecture)
-本專案採用 「微服務導向 (Service-Oriented)」 的模組化架構，將前端介面、業務邏輯、AI 推理與外部工具清楚分離。系統運作流程如下：
+✈️ AI 全能旅遊規劃師 (AI Smart Travel Planner)
+這是一個基於 Streamlit 與 大型語言模型 (LLM) 的智慧旅遊規劃 Agent。它不僅能根據你的預算與興趣生成每日行程，還具備聯網搜尋、即時票價比價 (Klook/KKday)、機票行情估算以及互動式地圖功能。
 
-前端 (Frontend)：使用者在網頁介面輸入需求（地點、天數、興趣）。
+系統採用 工廠模式 (Factory Pattern) 設計，支援無縫切換多種 AI 後端（Google Gemini、Groq LPU、Hugging Face Open Source）。
 
-AI 核心 (LLM Core)：Gemini 模型接收需求，分析意圖，判斷是否需要查詢外部資料。
+✨ 功能亮點 (Features)
+🤖 多模型支援 (Model Agnostic)：
 
-工具層 (Tools Layer)：
+Google Gemini 1.5 Flash：綜合能力強，支援原生 Function Calling。
 
-若需要機票 -> 呼叫 SerpApi (Google Flights)。
+Groq (Llama 3)：推論速度極快 (LPU)，適合即時互動。
 
-若需要門票/圖片 -> 呼叫 DuckDuckGo Search。
+Hugging Face (Qwen 2.5)：支援開源強大模型。
 
-資料整合 (Integration)：AI 將外部數據與行程邏輯整合，生成結構化的 JSON 資料。
+🎫 智慧票券比價：自動搜尋 Klook 與 KKday 的對應行程，並以精美的圖文卡片呈現價格與連結。
 
-渲染層 (Rendering)：前端解析 JSON，動態生成「互動地圖」、「比價卡片」與「行程表」。
+💰 預算控制與估算：
 
-2. 專案目錄結構與職責
-你的程式碼結構設計符合軟體工程的 Separation of Concerns (關注點分離) 原則：
+透過爬蟲 (DuckDuckGo) 搜尋網路遊記與機票行情，提供有憑有據的預算分析。
+
+自動計算總花費，若超支會發出警告。
+
+🗺️ 互動式地圖：使用 Folium 自動繪製每日路線圖，視覺化行程動線。
+
+📄 多格式匯出：支援一鍵下載 Markdown 筆記或排版精美的 PDF 行程表（支援繁體中文）。
+
+🌐 聯網能力：具備通用搜尋工具，遇未知景點會自動上網查詢最新資訊（營業時間、天氣等）。
+
+🏗️ 系統架構 (Architecture)
+專案採用 微服務導向 (Service-Oriented) 與 UI/Logic 分離 的架構：
 
 Plaintext
 
-project_root/
-├── .env                  # [設定] 存放 API Key，確保資安 (不需上傳 GitHub)
-├── main.py               # [前端] 程式進入點，負責 UI 佈局與狀態管理
-├── src/
-│   ├── gemini_service.py # [邏輯] 封裝與 Google Gemini 的對話與 Prompt 工程
-│   ├── tools.py          # [工具] 實作網路爬蟲與 API 串接 (DDG, SerpApi)
-│   └── map_utils.py      # [視覺化] 負責將座標資料轉換為 Folium 地圖物件
-└── requirements.txt      # [依賴] 專案所需的 Python 套件清單
-3. 關鍵套件與技術選型解析 (Tech Stack)
-以下是專案中使用的每一個核心套件及其被選用的理由：
+Final-Project/
+├── main.py               # [Entry] 程式入口，僅負責啟動 UI
+├── font.ttf              # [Resource] 繁體中文字型 (必須自行放入)
+├── .env                  # [Config] API Key 設定檔
+├── requirements.txt      # [Dependency] 套件清單
+└── src/
+    ├── ui/               # [UI Layer] Streamlit 介面邏輯
+    │   └── app.py
+    ├── llm_factory.py    # [Factory] 負責產生對應的 LLM Service 實例
+    ├── gemini_service.py # [Service] Google Gemini 實作
+    ├── groq_service.py   # [Service] Groq 實作
+    ├── hf_service.py     # [Service] Hugging Face 實作
+    ├── tools.py          # [Tools] 網路爬蟲與 API 工具 (DDG, SerpApi)
+    ├── map_utils.py      # [Utils] 地圖繪製邏輯
+    ├── pdf_generator.py  # [Utils] PDF 生成邏輯 (fpdf2)
+    ├── markdown_utils.py # [Utils] Markdown 生成邏輯
+    └── templates.py      # [View] Jinja2 HTML 模板 (卡片渲染)
+🚀 安裝與執行 (Installation)
+1. Clone 專案
+Bash
 
-A. 核心框架與介面
-streamlit
+git clone https://github.com/your-username/ai-travel-planner.git
+cd ai-travel-planner
+2. 安裝依賴套件
+建議使用虛擬環境 (venv)。
 
-用途： 快速建構 Web App 前端介面。
+Bash
 
-選用理由： 對於 Python 開發者最友善，不需要寫 HTML/CSS/JavaScript 就能做出響應式網頁。它內建的 st.session_state 讓狀態管理變得非常簡單。
+pip install -r requirements.txt
+(若無 requirements.txt，請安裝以下套件)：
 
-B. AI 模型與邏輯
-google-generativeai
+Bash
 
-用途： 呼叫 Google Gemini API (使用 gemini-1.5-flash 模型)。
+pip install streamlit streamlit-folium folium google-generativeai groq huggingface_hub python-dotenv duckduckgo-search fpdf2 jinja2
+3. 設定環境變數
+請在專案根目錄建立一個 .env 檔案，並填入你的 API Key：
 
-選用理由：
+Properties
 
-Function Calling (工具呼叫)： 原生支援讓 AI 決定何時呼叫 Python 函式，這是實現 "AI Agent" 的關鍵。
+# .env
+# 1. Google Gemini (必填)
+GOOGLE_API_KEY=your_google_api_key
 
-長文本能力： 1.5-flash 擁有百萬級 token window，適合處理大量旅遊資訊。
+# 2. Groq (選填，若要用 Llama 3)
+GROQ_API_KEY=your_groq_api_key
 
-成本效益： 比起 GPT-4o，Gemini 1.5 Flash 速度快且價格極低（甚至有免費層級）。
+# 3. Hugging Face (選填，若要用 Open Source Model)
+HF_TOKEN=your_hf_token
 
-C. 外部數據獲取 (Tools)
-duckduckgo-search
+# 4. SerpApi (選填，做為 Google 搜尋的備援)
+SERPAPI_KEY=your_serpapi_key
+4. 準備中文字型 (⚠️ 重要)
+為了讓生成的 PDF 能正確顯示中文，請下載 Noto Sans TC (思源黑體) 的 Static 版本。
 
-用途： 搜尋 Klook/KKday 的票券連結、標題，以及抓取景點圖片。
+前往 Google Fonts 下載。
 
-選用理由： 完全免費且不需要 API Key。相比 Google Search API 昂貴且有限制，DuckDuckGo 是學生專案抓取公開資訊的最佳選擇，且支援圖片搜尋。
+解壓縮後，找到 static/NotoSansTC-Regular.ttf。
 
-serpapi (google-search-results)
+將其重新命名為 font.ttf。
 
-用途： 專門用於抓取 Google Flights 的機票價格。
+放入專案的根目錄中。
 
-選用理由： Google Flights 的網頁結構極其複雜且有反爬蟲機制，直接寫爬蟲幾乎不可能。SerpApi 提供了穩定的 JSON 介面來獲取這些數據。
+5. 啟動程式
+Bash
 
-D. 地圖與視覺化
-folium
+streamlit run main.py
+🛠️ 常見問題排除 (Troubleshooting)
+Q1: 搜尋時出現 Unsupported protocol version 0x304 錯誤？
+A: 這是 macOS 的 SSL 函式庫與 curl_cffi 套件衝突導致。
 
-用途： 基於 Leaflet.js 的 Python 地圖庫，用來繪製底圖、標記點 (Markers) 和路線 (Polylines)。
+解法 1 (推薦)：程式已內建 fallback 機制，若 DuckDuckGo 失敗會自動切換至 SerpApi (若有設定)。
 
-streamlit-folium
+解法 2 (治本)：嘗試降級 curl_cffi 版本：
 
-用途： 橋接器。因為 Streamlit 原生不支援 Folium 的互動功能，這個套件讓地圖可以嵌入在 Streamlit 網頁中。
+Bash
 
-E. 系統與設定
-python-dotenv
+pip install curl_cffi==0.5.10 duckduckgo_search
+Q2: PDF 下載後中文變亂碼或方塊？
+A: 請確認根目錄下是否有 font.ttf 檔案，且該檔案必須是支援繁體中文的字型 (如 Noto Sans TC)。不要使用 Variable Font 版本，請使用 Static 版本。
 
-用途： 讀取 .env 檔案中的環境變數。
+Q3: 票券卡片顯示原始 HTML 碼？
+A: 這是 Markdown 縮排問題。本專案已使用 Jinja2 模板引擎並配合 .strip() 解決此問題，請確保你的 src/templates.py 是最新版本。
 
-選用理由： 資安最佳實踐。避免將 GOOGLE_API_KEY 等敏感資訊直接寫死在程式碼中 (Hard-code)，防止上傳 GitHub 時外洩。
+📚 技術棧 (Tech Stack)
+Frontend: Streamlit
+
+Map Visualization: Folium
+
+LLM Integration:
+
+Google Generative AI SDK
+
+Groq SDK
+
+Hugging Face Inference Client
+
+Search Tools: DuckDuckGo Search
+
+PDF Generation: fpdf2
+
+Templating: Jinja2
