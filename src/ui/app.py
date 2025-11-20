@@ -115,7 +115,7 @@ def run_app():
                 with st.spinner(f"AI 正在根據您的 {budget_input} 元預算進行規劃..."):
                     user_request = user_request_prompt(destination, days, origin, start_date, budget_input, interests)
                     raw_response = llm_service.generate_trip(user_request, enable_flights=enable_flight_search)
-                    
+                    print(raw_response)
                     try:
                         match = re.search(r"\{.*\}", raw_response, re.DOTALL)
                         if match:
