@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import re
+import os
 from dotenv import load_dotenv
 from streamlit_folium import st_folium
 
@@ -35,18 +36,48 @@ def user_request_prompt(destination, days, origin, start_date, budget, interests
     總預算約 TWD {budget}。
     興趣：{", ".join(interests)}。
 
-    【你的能力與工具】
-    1. **通用搜尋**：如果你不知道某個景點的介紹、交通方式或營業時間，請呼叫 `search_internet` 查詢，不要憑空捏造。
-    2. **機票估價**：請呼叫 `search_flight_average_cost` 查行情，再呼叫 `search_flights` 產連結。
-    3. **票券比價**：付費景點請呼叫 `search_activity_tickets`。
+    【執行步驟與邏輯】
+    1. **做功課**：
+        - 呼叫 `search_internet` 查詢 {destination} 的熱門景點及其「經緯度座標」。
+        - 呼叫 `search_flight_average_cost` 查機票行情。
     
-    【執行步驟】
-    1. 先上網做功課 (search_internet / search_flight_average_cost)。
-    2. 根據查到的資料規劃每日行程。
-    3. 進行預算試算 (budget_analysis)，最終輸出預算幣別請用 TWD，如果上面活動金額不是 TWD 請先換算。
-    4. 輸出 JSON。
-    """
+    2. **規劃行程 (地圖資料關鍵)**：
+        - **非常重要：** `daily_itinerary` 裡的每個景點，**必須** 是物件 (Object) 格式，不能只是字串。
+        - 每個景點物件 **必須包含** `latitude` (緯度) 和 `longitude` (經度) 兩個欄位。
+        - 如果你不知道座標，**請呼叫 `search_internet` 查詢該景點的 Google Maps 座標**，絕對不能省略，否則地圖會是一片空白。
 
+    3. **機票與票券**：
+        - 呼叫 `search_flights` 產連結。
+        - 對於付費景點，呼叫 `search_activity_tickets` 查價。
+
+    4. **預算檢核**：
+        - 計算總花費並填寫 `budget_analysis`，提供詳細的財務建議。
+
+    【最終輸出 JSON 格式規範】
+    請嚴格遵守以下 JSON 結構，特別是 attractions 的部分：
+    {{
+        "trip_name": "...",
+        "flight": {{...}},
+        "budget_analysis": "...",
+        "activities": [...],
+        "daily_itinerary": [
+        {{
+            "day": 1,
+            "theme": "...",
+            "attractions": [  <--- 這裡一定要是物件陣列
+            {{
+                "name": "大阪城",
+                "time": "10:00",
+                "description": "...",
+                "latitude": 34.6873,  <--- 必填
+                "longitude": 135.5260 <--- 必填
+            }},
+            {{ "name": "心齋橋", ... }}
+            ]
+        }}
+        ]
+    }}
+    """
 def run_app():
     load_dotenv()
 
@@ -80,8 +111,24 @@ def run_app():
         st.title("🌍 旅程設定")
         
         st.subheader("🤖 AI 模型")
-        llm_provider = st.selectbox("選擇後端", ["Google Gemini", "Groq (LPU)", "Hugging Face (Open Source)"])
-        
+        llm_provider = st.selectbox("選擇後端", 
+            ["Google Gemini", "Groq (LPU)", "Hugging Face (Open Source)", 
+             "Local Ollama (Llama 3.1)","Remote Ollama (Cloudflare Tunnel)"])
+        # 檢查 API Key 的邏輯也要更新
+        if llm_provider == "Google Gemini" and not os.getenv("GOOGLE_API_KEY"):
+            st.error("❌ 缺少 GOOGLE_API_KEY")
+        elif llm_provider == "Groq (LPU)" and not os.getenv("GROQ_API_KEY"):
+            st.error("❌ 缺少 GROQ_API_KEY")
+        elif llm_provider == "Hugging Face (Open Source)" and not os.getenv("HF_TOKEN"):
+            st.error("❌ 缺少 HF_TOKEN")
+        elif llm_provider == "Local Ollama (Llama 3.1)":
+            # Ollama 不用 Key，但我們可以提示使用者要開 Server
+            st.info("💡 請確保終端機已執行 `ollama serve` 且已下載 `llama3.1` 模型")
+        elif llm_provider == "Remote Ollama (Cloudflare Tunnel)":
+            if not os.getenv("REMOTE_OLLAMA_HOST") or not os.getenv("REMOTE_OLLAMA_TOKEN"):
+                st.error("❌ 缺少 REMOTE_OLLAMA 設定，請檢查 .env")
+            else:
+                st.success("✅ 已設定遠端連線資訊")
         st.divider()
 
         col_b1, col_b2 = st.columns(2)
@@ -183,6 +230,16 @@ def run_app():
         with col_m3:
             st.metric(label="🎫 門票/活動預算", value=f"TWD {activities_cost:,}")
         
+        # === 🔴 新增：顯示 AI 的文字分析報告 ===
+        analysis_text = result.get("budget_analysis")
+        if analysis_text:
+            # 根據內容判斷要用綠色(info)還是紅色(error)框框
+            if "不足" in analysis_text or "警告" in analysis_text or "超支" in analysis_text:
+                st.error(f"🤖 **AI 預算分析警告：**\n\n{analysis_text}")
+            else:
+                st.info(f"🤖 **AI 預算分析建議：**\n\n{analysis_text}")
+        # ===========================================
+
         st.caption("⚠️ 注意：此金額僅計算「機票」與「已知票券」，不含當地餐飲與交通費用。AI 估價僅供參考。")
         st.divider()
 
@@ -221,13 +278,36 @@ def run_app():
                         st.markdown(card_html, unsafe_allow_html=True)
 
             daily_itinerary = result.get("daily_itinerary", [])
-            if daily_itinerary:
-                st.subheader("📅 每日行程")
-                for day in daily_itinerary:
-                    with st.expander(f"Day {day.get('day')}: {day.get('theme', '行程')}", expanded=False):
-                        for spot in day.get('attractions', []):
-                            st.markdown(f"**{spot.get('time')} {spot.get('name')}**")
-                            st.caption(spot.get('description'))
+        if daily_itinerary:
+            st.subheader("📅 每日行程")
+            for day in daily_itinerary:
+                day_num = day.get('day', '?')
+                theme = day.get('theme', '行程')
+                
+                with st.expander(f"Day {day_num}: {theme}", expanded=False):
+                    
+                    # === 修正開始：相容性處理 ===
+                    # 先嘗試抓 'attractions' (Gemini 格式)
+                    attractions = day.get('attractions')
+                    
+                    # 如果沒有 attractions，就抓 'activities' (HuggingFace 格式)
+                    if not attractions:
+                        attractions = day.get('activities', [])
+
+                    # 開始顯示
+                    for idx, spot in enumerate(attractions):
+                        # 情境 A: spot 是物件 (Gemini)
+                        if isinstance(spot, dict):
+                            time = spot.get('time', '彈性時間')
+                            name = spot.get('name', '行程')
+                            desc = spot.get('description', '')
+                            st.markdown(f"**🕒 {time} - {name}**")
+                            if desc: st.caption(desc)
+                            
+                        # 情境 B: spot 是字串 (HuggingFace / Llama)
+                        elif isinstance(spot, str):
+                            # 直接顯示字串內容
+                            st.markdown(f"**📍 行程 {idx+1}:** {spot}")
 
         with col_right:
             st.subheader("🗺️ 地圖")

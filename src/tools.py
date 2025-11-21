@@ -16,7 +16,7 @@ def search_internet(query: str):
     
     try:
         # 搜尋前 3 筆結果 (region='tw-tzh' 針對台灣繁體優化)
-        results = list(DDGS().text(query, region="tw-tzh", max_results=3))
+        results = list(DDGS().text(query, region="tw-tzh", max_results=7))
         
         if not results:
             return "抱歉，網路上查無相關資訊。"
