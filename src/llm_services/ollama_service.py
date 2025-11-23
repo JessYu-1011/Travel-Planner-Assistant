@@ -1,112 +1,31 @@
 from ollama import Client
 import json
 from .base_service import BaseLLMService
-from src.tools import search_flights, search_activity_tickets, search_flight_average_cost, search_internet
+from src.tools.tools import search_flights, search_activity_tickets, search_flight_average_cost, search_internet
+from src.tools.prompt import *
+from src.tools.tools_list import get_tool_lists
 
 class OllamaService(BaseLLMService):
     def __init__(self, model_name="llama3:8b", host="http://localhost:11434", auth_token=None):
         """
-        初始化 Ollama 服務
-        :param model_name: 模型名稱
-        :param host: Ollama 伺服器地址
-        :param auth_token: 若需要驗證 (如 Cloudflare Tunnel)，請傳入 Bearer Token
+        Init the instance for calling ollama
+        :param model_name
+        :param host
+        :param auth_token: access token(if needed)
         """
         self.model = model_name
         
-        # 設定 Headers
         headers = {}
         if auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
             
-        # 建立 Client 實例，傳入 host 和 headers
+        # The address of the ollama server
         self.client = Client(host=host, headers=headers)
         
-        # 定義工具 (Schema)
-        self.tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_flights",
-                    "description": "產生機票比價連結",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "origin": {"type": "string"},
-                            "destination": {"type": "string"},
-                            "departure_date": {"type": "string"}
-                        },
-                        "required": ["origin", "destination", "departure_date"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_activity_tickets",
-                    "description": "搜尋景點門票 (Klook/KKday)",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "keyword": {"type": "string"},
-                            "platform": {"type": "string", "enum": ["klook", "kkday"]}
-                        },
-                        "required": ["keyword", "platform"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_flight_average_cost",
-                    "description": "搜尋網路上的平均機票價格行情",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "origin": {"type": "string"},
-                            "destination": {"type": "string"}
-                        },
-                        "required": ["origin", "destination"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_internet",
-                    "description": "通用搜尋工具，查詢天氣、景點介紹等",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {"type": "string"}
-                        },
-                        "required": ["query"]
-                    }
-                }
-            }
-        ]
+        self.tools = get_tool_lists()
 
     def generate_trip(self, user_prompt: str, enable_flights: bool = True) -> str:
-        flight_instr = "請呼叫 search_flights 產連結，並用 search_flight_average_cost 估預算。" if enable_flights else "忽略機票。"
-        
-        system_prompt = f"""
-        You are a professional travel planner.
-        
-        【Rules】
-        1. Use `search_activity_tickets` for paid attractions.
-        2. {flight_instr}
-        3. If you need info, use `search_internet`.
-        4. **IMPORTANT:** Output ONLY valid JSON. No markdown.
-        
-        Please obey the rules strickly
-        【JSON Example】
-        {{
-            "trip_name": "Trip Title",
-            "flight": {{ "airline": "...", "price": "TWD 15000", "link": "..." }},
-            "budget_analysis": "...",
-            "activities": [ {{ "name": "...", "platform": "klook", "price": "...", "link": "..." }} ],
-            "daily_itinerary": [ {{ "day": 1, "theme": "...", "attractions": [ {{ "name": "...", "time": "10:00", "description": "...", "latitude": 25.0, "longitude": 121.0 }} ] }} ]
-        }}
-        """
+        system_prompt=get_system_prompt(enable_flights)
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -116,7 +35,6 @@ class OllamaService(BaseLLMService):
         print(f"🚀 [Remote Ollama] 連線至 {self.client._client.base_url} (Model: {self.model})...")
 
         try:
-            # 第一輪：呼叫模型
             response = self.client.chat(
                 model=self.model,
                 messages=messages,
@@ -152,7 +70,6 @@ class OllamaService(BaseLLMService):
                     "content": json.dumps(res, ensure_ascii=False)
                 })
 
-            # 第二輪：生成最終 JSON
             final_response = self.client.chat(
                 model=self.model,
                 messages=messages,

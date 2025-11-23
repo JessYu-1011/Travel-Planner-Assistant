@@ -16,15 +16,12 @@ def get_llm_service(provider: str):
     elif provider == "Hugging Face (Open Source)":
         return HuggingFaceService()
 
-    # 本地 Ollama
     elif "Local Ollama" in provider:
         ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
         model_name = "qwen2.5:14b" # 或 llama3.1
         return OllamaService(model_name=model_name, host=ollama_host)
 
-    # === 新增：遠端 Ollama ===
     elif "Remote Ollama" in provider:
-        # 讀取 .env 設定
         host = os.getenv("REMOTE_OLLAMA_HOST")
         token = os.getenv("REMOTE_OLLAMA_TOKEN")
         model = os.getenv("REMOTE_OLLAMA_MODEL", "llama3:8b")
