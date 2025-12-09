@@ -36,7 +36,7 @@ class GroqService:
             temperature=0.2, # Lower down the randomness
             max_tokens=4096
         )
-        response_message = response.choices[0].messaget
+        response_message = response.choices[0].message
         # Whether LLM wants to use tools
         tool_calls = response_message.tool_calls
 
