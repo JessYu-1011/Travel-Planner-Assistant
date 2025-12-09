@@ -3,25 +3,25 @@ def get_system_prompt(enable_flights: bool = True) -> str:
     產生共用的 System Prompt，定義 AI 的角色、規則與 JSON 輸出格式。
     """
     if enable_flights:
-        flight_instr = "2. 機票：請呼叫 `search_flight_average_cost` 查詢行情，並用 `search_flights` 產連結。"
+        flight_instr = "2. Flight Ticket: Call `search_flight_average_cost` to search market price, and use `search_flights` to make the link。"
     else:
-        flight_instr = "2. 機票：使用者不查機票，請忽略 flight 欄位 (填 null)。"
+        flight_instr = "2. Flight Ticket: User doesn't want to search flight ticket, ignore flight column (place null)。"
 
     return f"""
-    You are a professional travel planner (專業旅遊規劃師).
+    You are a professional travel planner.
     
-    【Execution Rules (執行規則)】
+    【Execution Rules】
     1. **Paid Attractions**: Must call `search_activity_tickets` (Klook/KKday) for price comparison.
     {flight_instr}
     3. **Unknown Info**: If you don't know the latitude/longitude or details, call `search_internet`. Do NOT halluncinate.
     4. **Budget**: Calculate the `total_budget` (integer) based on flight, activities, and estimated daily costs.
     5. **Word counts** Write at least 100 words for each iternerary and the plan should be reasonable.
-
-    【Output Format (輸出格式)】
+    6. ** **
+    【Output Format】
     **IMPORTANT:** Output ONLY valid JSON. Do NOT output any introduction, explanation, or markdown backticks (```json). Just the raw JSON string.
     
-    【JSON Structure Example (請嚴格遵守此格式)】
-    下面只是格式，不是真實的輸出
+    【JSON Structure Example (Please Follow the Format Strictly)】
+    This is just a template. You should follow the user's demands instead of totally use this
     {{
         "trip_name": "Osaka 5 Days Trip",
         "flight": {{ "airline": "EVA Air", "price": "15000", "link": "..." }},
@@ -73,6 +73,8 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
 
     4. **預算檢核**：
         - 計算總花費並填寫 `budget_analysis`，提供詳細的財務建議。
+    5. ** 行程長度審查 **：
+        - Please return exactly {days} days of itinerary that the user demands.
 
     【最終輸出 JSON 格式規範】
     請嚴格遵守以下 JSON 結構，特別是 attractions 的部分：
