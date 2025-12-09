@@ -1,5 +1,6 @@
 import os
 import json
+import streamlit as st
 from groq import Groq
 from src.tools.tools import *
 from src.tools.prompt import *
@@ -8,7 +9,7 @@ from src.tools.tools_list import get_tool_lists
 class GroqService:
     def __init__(self):
         self.client = Groq(
-            api_key=os.getenv("GROQ_API_KEY"),
+            api_key= st.secrets['GROQ_API_KEY'] or os.getenv("GROQ_API_KEY"),
         )
         self.model = "llama-3.3-70b-versatile" 
 

@@ -1,5 +1,6 @@
 import os
 import json
+import streamlit as st
 from huggingface_hub import InferenceClient
 from .base_service import BaseLLMService
 from src.tools.tools import search_flights, search_activity_tickets, search_flight_average_cost, search_internet
@@ -8,7 +9,7 @@ from src.tools.tools_list import get_tool_lists
 
 class HuggingFaceService(BaseLLMService):
     def __init__(self):
-        self.client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
+        self.client = InferenceClient(api_key=(st.secrets['HF_TOKEN'] or os.getenv("HF_TOKEN")))
         self.model = "meta-llama/Llama-3.3-70B-Instruct:groq"
 
         self.tools = get_tool_lists()

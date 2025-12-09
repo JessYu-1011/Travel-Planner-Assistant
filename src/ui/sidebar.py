@@ -14,16 +14,16 @@ def render_sidebar():
             "Local Ollama (Llama 3.1)","Remote Ollama (Cloudflare Tunnel)"])
         
         # API Key 檢查邏輯
-        if llm_provider == "Google Gemini" and not os.getenv("GOOGLE_API_KEY"):
+        if llm_provider == "Google Gemini" and not (st.secrets['GOOGLE_API_KEY'] or os.getenv("GOOGLE_API_KEY")):
             st.error("❌ 缺少 GOOGLE_API_KEY")
-        elif llm_provider == "Groq (LPU)" and not os.getenv("GROQ_API_KEY"):
+        elif llm_provider == "Groq (LPU)" and not (st.secrets['GROQ_API_KEY'] or os.getenv("GROQ_API_KEY")):
             st.error("❌ 缺少 GROQ_API_KEY")
-        elif llm_provider == "Hugging Face (Open Source)" and not os.getenv("HF_TOKEN"):
+        elif llm_provider == "Hugging Face (Open Source)" and not (st.secrets['HF_TOKEN'] or os.getenv("HF_TOKEN")):
             st.error("❌ 缺少 HF_TOKEN")
         elif llm_provider == "Local Ollama (Llama 3.1)":
             st.info("💡 請確保終端機已執行 `ollama serve`")
         elif llm_provider == "Remote Ollama (Cloudflare Tunnel)":
-            if not os.getenv("REMOTE_OLLAMA_HOST"):
+            if not (st.secrets['REMOTE_OLLAMA_HOST'] or os.getenv("REMOTE_OLLAMA_HOST")):
                 st.error("❌ 缺少 REMOTE_OLLAMA 設定")
             else:
                 st.success("✅ 已設定遠端連線資訊")
