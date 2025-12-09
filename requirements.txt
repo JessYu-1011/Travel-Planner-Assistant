@@ -15,7 +15,7 @@ charset-normalizer==3.4.4
 click==8.1.8
 cryptography==46.0.3
 cssselect2==0.8.0
-curl-cffi==0.5.10
+curl-cffi==0.7.0b4
 ddgs==9.8.0
 defusedxml==0.7.1
 distro==1.9.0
