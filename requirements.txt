@@ -80,7 +80,7 @@ pydeck==0.9.1
 pyHanko==0.31.0
 pyhanko-certvalidator==0.29.0
 pyparsing==3.2.5
-pypdf==6.3.0
+pypdf==6.4.0
 python-bidi==0.6.7
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
