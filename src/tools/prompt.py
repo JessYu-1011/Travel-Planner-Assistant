@@ -66,6 +66,7 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
         - **非常重要：** `daily_itinerary` 裡的每個景點，**必須** 是物件 (Object) 格式，不能只是字串。
         - 每個景點物件 **必須包含** `latitude` (緯度) 和 `longitude` (經度) 兩個欄位。
         - 如果你不知道座標，**請呼叫 `search_internet` 查詢該景點的 Google Maps 座標**，絕對不能省略，否則地圖會是一片空白。
+        - 一天內可以放 2～3 個行程，可以參考網路上的資料。
 
     3. **機票與票券**：
         - 呼叫 `search_flights` 產連結。
@@ -73,11 +74,10 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
 
     4. **預算檢核**：
         - 計算總花費並填寫 `budget_analysis`，提供詳細的財務建議。
-        - If the amount of money is not enough for this length of trip, you should still generate a full itinerary 
-        but notify the user that the budget is too low.
+        - 如果花費可能超過預算，一樣輸出完整行程，但是要提醒使用者預算不足。
 
     5. ** 行程長度審查 **：
-        - The user says {days} days, you should generate the itinerary with {days} days.
+        - 如果要求 {days} 天的行程，要確保回覆時總共有 {days} 天的行程。
 
     【最終輸出 JSON 格式規範】
     請嚴格遵守以下 JSON 結構，特別是 attractions 的部分：
@@ -94,11 +94,13 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
             {{
                 "name": "大阪城",
                 "time": "10:00",
-                "description": "...", <--- at least 50 words
+                "description": "...", <--- 至少 50 字
                 "latitude": 34.6873,  <--- 必填
                 "longitude": 135.5260 <--- 必填
             }},
-            {{ "name": "心齋橋", ... }}
+            {{ "name": "心齋橋",
+                "time": ....,
+            }}
             ]
         }}
         ]
