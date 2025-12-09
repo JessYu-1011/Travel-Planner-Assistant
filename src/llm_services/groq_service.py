@@ -1,4 +1,3 @@
-# src/groq_service.py
 import os
 import json
 from groq import Groq
@@ -17,11 +16,9 @@ class GroqService:
         
     def generate_trip(self, user_prompt, enable_flights=True):
         """
-        執行對話並處理工具呼叫 (Tool Calling Loop)
+        Tool Calling Loop
         """
-        
-        # 1. 構建系統提示詞 (System Prompt)
-        
+
         system_prompt = get_system_prompt(enable_flights)
 
         messages = [
@@ -29,30 +26,29 @@ class GroqService:
             {"role": "user", "content": user_prompt}
         ]
 
-        # 2. 第一輪呼叫：看 AI 是否想用工具
+
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             tools=self.tools,
             tool_choice="auto",
-            temperature=0.2, # 降低隨機性，讓 JSON 格式更穩
+            temperature=0.2, # Lower down the randomness
             max_tokens=4096
         )
-
-        response_message = response.choices[0].message
+        response_message = response.choices[0].messaget
+        # Whether LLM wants to use tools
         tool_calls = response_message.tool_calls
 
-        # 3. 如果 AI 決定要呼叫工具
+        # If it wants to call tools
         if tool_calls:
-            # 把 AI 的「我想呼叫工具」這個念頭加入對話歷史
+            # Append the response to chat history
             messages.append(response_message)
 
-            # 執行所有被要求的工具
+            # Execute all tools used
             for tool_call in tool_calls:
                 fn_name = tool_call.function.name
                 fn_args = json.loads(tool_call.function.arguments)
-                
-                # 3. 加入執行邏輯
+
                 if fn_name == "search_flights":
                     res = search_flights(**fn_args)
                 elif fn_name == "search_activity_tickets":
@@ -64,7 +60,7 @@ class GroqService:
                 else:
                     res = {"error": "Unknown tool"}
 
-                # 將工具執行結果 (JSON string) 加回對話歷史
+                # Add the result of tools to the history
                 messages.append({
                     "tool_call_id": tool_call.id,
                     "role": "tool",
@@ -72,14 +68,14 @@ class GroqService:
                     "content": json.dumps(res, ensure_ascii=False)
                 })
 
-            # 4. 第二輪呼叫：把工具結果給 AI，請它生成最終 JSON
+            # 4. Add the results from tools to the LLM
             final_response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=0.2
             )
             return final_response.choices[0].message.content
-        
+
+        # If there are no tool calls, return directly
         else:
-            # 如果 AI 沒用工具，直接回傳結果
             return response_message.content

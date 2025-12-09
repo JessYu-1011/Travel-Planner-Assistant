@@ -27,7 +27,7 @@ class HuggingFaceService(BaseLLMService):
             tools=self.tools,
             tool_choice="auto",
             max_tokens=4000,
-            temperature=0.2 # In order to lower the randomness
+            temperature=0.2
         )
 
         message = response.choices[0].message
@@ -41,7 +41,6 @@ class HuggingFaceService(BaseLLMService):
                 fn_args = json.loads(tool_call.function.arguments)
                 print(f"🤗 [HF] 呼叫工具: {fn_name}")
 
-                # execute the tools
                 if fn_name == "search_flights":
                     res = search_flights(**fn_args)
                 elif fn_name == "search_activity_tickets":
@@ -60,7 +59,6 @@ class HuggingFaceService(BaseLLMService):
                     "content": json.dumps(res, ensure_ascii=False)
                 })
 
-            # generate the json
             final_response = self.client.chat_completion(
                 model=self.model,
                 messages=messages,

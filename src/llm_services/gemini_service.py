@@ -1,4 +1,3 @@
-# src/gemini_service.py
 import google.generativeai as genai
 import json
 from .base_service import BaseLLMService
@@ -8,7 +7,7 @@ from src.tools.prompt import *
 class GeminiService(BaseLLMService):
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        # The tools that can be used
+        # All tools that can be used
         self.tools = [
             search_flights, 
             search_activity_tickets,

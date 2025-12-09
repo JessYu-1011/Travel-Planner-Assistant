@@ -1,8 +1,6 @@
-# src/templates.py
 from jinja2 import Template
 
-# 定義 HTML 模板
-# 注意：為了避免 Markdown 解析錯誤，我們這裡盡量保持 HTML 結構單純
+# HTML templates for ticket cards
 TICKET_CARD_TEMPLATE = """
 <a href="{{ link }}" target="_blank" style="text-decoration: none; color: inherit; display: block; margin-bottom: 10px;">
 <div style="display: flex; background: white; border-radius: 10px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">

@@ -1,4 +1,3 @@
-# src/map_utils.py
 import folium
 
 def render_map(trip_data: dict):

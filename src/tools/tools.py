@@ -1,4 +1,3 @@
-# src/tools.py
 from ddgs import DDGS
 import urllib.parse
 import time
@@ -21,7 +20,7 @@ def search_internet(query: str):
         if not results:
             return "抱歉，網路上查無相關資訊。"
             
-        # arrange for LLM
+        # arrange the results for LLM
         summary = f"關於 '{query}' 的搜尋結果：\n"
         for res in results:
             title = res.get('title', '無標題')
