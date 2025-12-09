@@ -73,8 +73,11 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
 
     4. **預算檢核**：
         - 計算總花費並填寫 `budget_analysis`，提供詳細的財務建議。
+        - If the amount of money is not enough for this length of trip, you should still generate a full itinerary 
+        but notify the user that the budget is too low.
+
     5. ** 行程長度審查 **：
-        - Please return exactly {days} days of itinerary that the user demands.
+        - The user says {days} days, you should generate the itinerary with {days} days.
 
     【最終輸出 JSON 格式規範】
     請嚴格遵守以下 JSON 結構，特別是 attractions 的部分：
@@ -91,7 +94,7 @@ def get_user_request_prompt(destination, days, origin, start_date, budget, inter
             {{
                 "name": "大阪城",
                 "time": "10:00",
-                "description": "...",
+                "description": "...", <--- at least 50 words
                 "latitude": 34.6873,  <--- 必填
                 "longitude": 135.5260 <--- 必填
             }},
