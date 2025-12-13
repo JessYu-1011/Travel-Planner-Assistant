@@ -28,9 +28,9 @@
 ## 🏗️ 系統架構 (Architecture)
 > 專案採用 微服務導向 (Service-Oriented) 與 UI/Logic 分離 的架構：
 
-```.
-├── config.py
-├── flowchart.md
+```
+.
+├── README.md
 ├── fonts
 │   ├── NotoSansTC-Black.ttf
 │   ├── NotoSansTC-Bold.ttf
@@ -42,7 +42,7 @@
 │   ├── NotoSansTC-SemiBold.ttf
 │   └── NotoSansTC-Thin.ttf
 ├── main.py
-├── README.md
+├── packages.txt
 ├── requirements.txt
 └── src
     ├── __init__.py
@@ -58,12 +58,11 @@
     │   ├── llm_factory.py
     │   └── ollama_service.py
     ├── map_utils.py
-    ├── models.py
     ├── templates.py
     ├── tools
     │   ├── prompt.py
-    │   ├── tools_list.py
-    │   └── tools.py
+    │   ├── tools.py
+    │   └── tools_list.py
     ├── ui
     │   ├── __init__.py
     │   ├── dashboard.py
