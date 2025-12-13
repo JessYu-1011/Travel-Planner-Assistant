@@ -15,7 +15,7 @@ TICKET_CARD_TEMPLATE = """
 
 def render_ticket_card(link, img_url, title, badge_color, platform_name, price):
     """
-    渲染票券卡片 HTML。
+    Render tickets cards html
     """
     template = Template(TICKET_CARD_TEMPLATE)
     html_code = template.render(
@@ -26,7 +26,5 @@ def render_ticket_card(link, img_url, title, badge_color, platform_name, price):
         platform_name=platform_name,
         price=price
     )
-    
-    # 關鍵：移除所有前後空白與換行，變成一行字串
-    # 這能 100% 防止 Streamlit 把它當成 code block
+
     return html_code.strip().replace("\n", "")

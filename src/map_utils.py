@@ -1,12 +1,13 @@
 import folium
 
 def render_map(trip_data: dict):
-    # 安全檢查
+
     itinerary = trip_data.get('daily_itinerary', [])
+    # If there isn't this structure, just return the location in taipei
     if not itinerary:
         return folium.Map(location=[23.69, 120.96], zoom_start=7)
 
-    # 找中心點
+    # Find the central point
     start_lat, start_lng = 25.03, 121.56
     try:
         first_spot = itinerary[0]['attractions'][0]

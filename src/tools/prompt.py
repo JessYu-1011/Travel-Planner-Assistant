@@ -1,7 +1,7 @@
+"""
+System prompts and user prompts
+"""
 def get_system_prompt(enable_flights: bool = True) -> str:
-    """
-    產生共用的 System Prompt，定義 AI 的角色、規則與 JSON 輸出格式。
-    """
     if enable_flights:
         flight_instr = "2. Flight Ticket: Call `search_flight_average_cost` to search market price, and use `search_flights` to make the link。"
     else:
